@@ -5,7 +5,7 @@ module top(
 );
 
     wire IMreadEn, RegReadEn1, RegReadEn2, RegWriteEn,
-        ex_regWriteEn, alu_regWriteEn_o,
+        ex_regWriteEn, alu_regWriteEn_o, br_flag,
         mem_regWriteEn, mem_regWriteEn_o, wb_regWriteEn;
     wire [1:0] AluSrc1, AluSrc2;
     wire [3:0] AluOp, ex_aluOp;
@@ -14,23 +14,25 @@ module top(
     wire [31:0] pc, instr, id_PC, id_instr,
         imm, id_num1, id_num2, RegWriteData, readData1, readData2,
         ex_num1, ex_num2, alu_regWriteData_o, mem_regWriteData,
-        mem_regWriteData_o, wb_regWriteData;
+        mem_regWriteData_o, wb_regWriteData, linkAddr, ex_linkAddr,
+        br_addr;
     
 //IF模块实例化
     //IM
     IM IM(.rstn(rstn), .IMreadEn(IMreadEn), .pc(pc), .instr(instr));
 
     //PC
-    PC PC(.clk(clk), .rstn(rstn), .pc(pc), .IMreadEn(IMreadEn));
+    PC PC(.clk(clk), .rstn(rstn), .br_flag(br_flag), .br_addr(br_addr),
+        .pc(pc), .IMreadEn(IMreadEn));
 
     //IF_ID
     IF_ID IF_ID(.clk(clk), .rstn(rstn), .if_PC(pc), .if_instr(instr),
-        .id_PC(id_PC), .id_instr(id_instr));
+        .id_PC(id_PC), .id_instr(id_instr), .br_flag(br_flag));
 
     //流水线每个阶段需要传递上个阶段的信息
 //ID模块实例化
     //ControlUnit
-    ControlUnit ControlUnit(.rstn(rstn), .pc(id_PC), .instr(id_instr),
+    ControlUnit ControlUnit(.rstn(rstn), .instr(id_instr),
         .RegReadEn1(RegReadEn1), .RegReadEn2(RegReadEn2), .RegWriteEn(RegWriteEn),
         .AluOp(AluOp), .AluSrc1(AluSrc1), .AluSrc2(AluSrc2), .imm(imm), .RegWriteAddr(RegWriteAddr),
         .daHa_ex_regWrEn(alu_regWriteEn_o), .daHa_ex_regWrAddr(alu_regWriteAddr_o),
@@ -51,18 +53,23 @@ module top(
     Mux4_32bits Alu_mux2(.a(imm), .b(readData2), .c(alu_regWriteData_o), .d(mem_regWriteData),
         .choice(AluSrc2), .out(id_num2));
 
+    //Br_judge
+    Br_judge Br_judge(.rstn(rstn), .pc(id_PC), .instr(id_instr), .readData1(id_num1),
+        .readData2(id_num2), .br_flag(br_flag), .br_addr(br_addr), .linkAddr(linkAddr));
+
     //ID_EX
     ID_EX ID_EX(.clk(clk), .rstn(rstn), .id_num1(id_num1), .id_num2(id_num2),
         .id_regWriteEn(RegWriteEn), .id_regWriteAddr(RegWriteAddr), .id_aluOp(AluOp),
-        .ex_num1(ex_num1), .ex_num2(ex_num2), .ex_regWriteEn(ex_regWriteEn),
-        .ex_regWriteAddr(ex_regWriteAddr), .ex_aluOp(ex_aluOp));
+        .id_linkAddr(linkAddr), .ex_num1(ex_num1), .ex_num2(ex_num2),
+        .ex_regWriteEn(ex_regWriteEn), .ex_regWriteAddr(ex_regWriteAddr), .ex_aluOp(ex_aluOp),
+        .ex_linkAddr(ex_linkAddr));
     
 //EX模块
     //Alu
     Alu Alu(.rstn(rstn), .num1(ex_num1), .num2(ex_num2), .AluOp(ex_aluOp),
         .RegWriteEn_i(ex_regWriteEn), .RegWriteAddr_i(ex_regWriteAddr),
         .RegWriteEn_o(alu_regWriteEn_o), .RegWriteAddr_o(alu_regWriteAddr_o),
-        .RegWriteData_o(alu_regWriteData_o));
+        .RegWriteData_o(alu_regWriteData_o), .linkAddr(ex_linkAddr));
     
     //EX_MEM
     EX_MEM EX_MEM(.clk(clk), .rstn(rstn), .ex_regWriteEn(alu_regWriteEn_o),

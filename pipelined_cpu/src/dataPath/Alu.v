@@ -11,6 +11,7 @@ module Alu(
     AluOp,          //alu操作类型
     RegWriteEn_i,   //需要传递的变量
     RegWriteAddr_i,
+    linkAddr,
     RegWriteEn_o,
     RegWriteAddr_o,
     RegWriteData_o  //需要写入寄存器的结果
@@ -18,7 +19,7 @@ module Alu(
     input rstn, RegWriteEn_i;
     input [3:0] AluOp;
     input [4:0] RegWriteAddr_i;
-    input [31:0] num1, num2;
+    input [31:0] num1, num2, linkAddr;
 
     output reg RegWriteEn_o;
     output [4:0] RegWriteAddr_o;
@@ -53,6 +54,7 @@ module Alu(
             //SRA使用函数
             `SRA:   res <= $signed(num2) >>> num1[4:0];
             //`SRA:   res <= ({32{num2[31]}} << (6'd32 - {1'b0, num1[4:0]})) | (num2 >> num1[4:0]);
+            `LINK:  res <= linkAddr;
             default: res <= 0;
             endcase    
         end

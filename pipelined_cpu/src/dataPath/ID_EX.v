@@ -9,21 +9,23 @@ module ID_EX(
     id_regWriteEn,      //写寄存器使能
     id_regWriteAddr,    //写寄存器地址
     id_aluOp,           //操作类型
+    id_linkAddr,        //链接地址
     ex_num1,
     ex_num2,
     ex_regWriteEn,      
     ex_regWriteAddr,
-    ex_aluOp
+    ex_aluOp,
+    ex_linkAddr
 );
     input clk, rstn, id_regWriteEn;
     input [3:0] id_aluOp;
     input [4:0] id_regWriteAddr;
-    input [31:0] id_num1, id_num2;
+    input [31:0] id_num1, id_num2, id_linkAddr;
 
     output reg ex_regWriteEn;
     output reg [3:0] ex_aluOp;
     output reg [4:0] ex_regWriteAddr;
-    output reg [31:0] ex_num1, ex_num2;
+    output reg [31:0] ex_num1, ex_num2, ex_linkAddr;
 
     //num1
     always @(posedge clk) begin
@@ -63,6 +65,14 @@ module ID_EX(
             ex_aluOp <= 0;
         else
             ex_aluOp <= id_aluOp;
+    end
+    
+    //linkAddr
+    always @(posedge clk) begin
+        if (!rstn)
+            ex_linkAddr <= 0;
+        else
+            ex_linkAddr <= id_linkAddr;
     end
     
 endmodule

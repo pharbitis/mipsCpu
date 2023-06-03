@@ -68,8 +68,8 @@
 
 //特殊编码的branch指令
 `define SPE_BRA 6'b000001  //两种branch的op段
-`define BLTZ 6'b000000     //func段 (小于0转移)
-`define BGEZ 6'b000001
+`define BLTZ 5'b00000     //rt段 (小于0转移)
+`define BGEZ 5'b00001
 
 //J型指令的op段
 `define J 6'b000010

@@ -11,7 +11,7 @@
 `define SRL 4'd9    //逻辑右移
 `define SRA 4'd10    //算术右移
 `define ADD 4'd11    //带符号加
-
+`define LINK 4'd12  //结果为链接地址
 
 
 

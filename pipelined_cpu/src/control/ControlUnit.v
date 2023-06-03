@@ -5,7 +5,6 @@
 
 module ControlUnit(
     rstn,
-    pc,                 //当前指令地址
     instr,              //当前指令
     daHa_ex_regWrEn,    //为解决数据冒险引入EX阶段的数据前推
     daHa_ex_regWrAddr,
@@ -18,12 +17,12 @@ module ControlUnit(
     AluSrc1,            //alu第一个操作数来源
     AluSrc2,
     imm,                //拓展后立即数
-    RegWriteAddr        //写寄存器的地址
+    RegWriteAddr,        //写寄存器的地址
 );
 
     input rstn, daHa_ex_regWrEn, daHa_mem_regWrEn;
     input [4:0] daHa_ex_regWrAddr, daHa_mem_regWrAddr;
-    input [31:0] pc, instr;
+    input [31:0] instr;
     output reg RegReadEn1, RegReadEn2, RegWriteEn;
     output reg [1:0] AluSrc1, AluSrc2;
     output reg [3:0] AluOp;
@@ -41,12 +40,14 @@ module ControlUnit(
 
     //RegWriteAddr
     //rd或rt
+    //需要链接的跳转指令为链接寄存器
     always @(*) begin
         if (!rstn)
             RegWriteAddr <= 0;      //虽然赋值为0但无法写入
         else begin
             case (op)
                 `ORI, `ANDI, `LUI, `XORI, `ADDI, `ADDIU:   RegWriteAddr <= instr[20:16];   //I型指令选择rt 
+                `JAL:   RegWriteAddr <= 5'd31;
                 `R, `MUL: RegWriteAddr <= instr[15:11];   //R型指令选择rd
                 default: RegWriteAddr <= 0; 
             endcase
@@ -83,6 +84,7 @@ module ControlUnit(
             RegReadEn1 <= 0;    //默认无效
         else begin
             case (op)
+                `J, `JAL:   RegReadEn1 <= 0;
                 `R: begin
                     case (func)
                         `SLL, `SRA, `SRL:   RegReadEn1 <= 0;     
@@ -100,7 +102,13 @@ module ControlUnit(
             RegReadEn2 <= 0;    //默认无效
         else begin
             case (op)
-                `R, `MUL:      RegReadEn2 <= 1;
+                `MUL, `BEQ, `BNE:      RegReadEn2 <= 1;
+                `R: begin
+                    case (func)
+                        `JR, `JALR: RegReadEn2 <= 0; 
+                        default:    RegReadEn2 <= 1;
+                    endcase
+                end
                 default: RegReadEn2 <= 0;
             endcase
         end
@@ -112,7 +120,13 @@ module ControlUnit(
             RegWriteEn <= 0;    //默认无效
         else begin
             case (op)
-                `R, `MUL:     RegWriteEn <= 1;
+                `JAL, `MUL:     RegWriteEn <= 1;
+                `R: begin
+                    case (func)
+                        `JR:  RegWriteEn <= 0; 
+                        default: RegWriteEn <= 1;
+                    endcase
+                end
                 `ORI, `ANDI, `LUI, `XORI, `ADDI, `ADDIU:    RegWriteEn <= 1;
                 default: RegWriteEn <= 0;
             endcase
@@ -179,10 +193,10 @@ module ControlUnit(
                 `ADDIU: AluOp <= 0;
                 `ORI, `LUI:   AluOp <= 2;   //lui转换为ori
                 `ANDI:  AluOp <= 3;
+                `MUL:   AluOp <= 4;         //特殊R型指令
                 `XORI:  AluOp <= 6;
                 `ADDI:  AluOp <= 11;
-                `MUL:   AluOp <= 4;         //特殊R型指令
-
+                `JAL:   AluOp <= 12;
                 `R: begin
                     //R型指令 
                     case (func)
@@ -197,6 +211,7 @@ module ControlUnit(
                         `SRL, `SRLV:    AluOp <= 9;
                         `SRA, `SRAV:    AluOp <= 10;
                         `ADD:           AluOp <= 11;
+                        `JALR:  AluOp <= 12;
                         default: AluOp <= 0;
                     endcase       
                 end
