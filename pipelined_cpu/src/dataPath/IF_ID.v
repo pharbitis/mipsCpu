@@ -28,9 +28,9 @@ module IF_ID(
     //传递instruction的值
     //取指为0即可
     always @(posedge clk) begin
-        if (!rstn) 
+        if (!rstn || br_flag) 
             id_instr <= 0;
-        else if (br_flag || load_stop_request)
+        else if (load_stop_request)
             id_instr <= id_instr;
         else
             id_instr <= if_instr;
