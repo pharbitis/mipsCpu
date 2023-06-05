@@ -10,11 +10,11 @@ module IM(
     input [31:0] pc;
     output reg [31:0] instr;
 
-    reg [7:0] ROM [127:0];              //128kb的IM
+    reg [7:0] ROM [511:0];              //512字节的IM
     integer i;
-    wire [6:0] pointer;
+    wire [8:0] pointer;
 
-    assign pointer = pc[6:0];    //只需要7位地址,最后两位都是0所以省略
+    assign pointer = pc[8:0];    //只需要9位地址
 
     //初始化
     always @(*) begin

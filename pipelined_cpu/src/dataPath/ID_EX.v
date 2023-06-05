@@ -22,7 +22,7 @@ module ID_EX(
     ex_linkAddr,
     ex_memWriteEn,
     ex_memOp,
-    ex_memAddr
+    ex_memAddr,
 );
     input clk, rstn, id_regWriteEn, id_memWriteEn, load_stop_request;
     input [2:0] id_memOp;

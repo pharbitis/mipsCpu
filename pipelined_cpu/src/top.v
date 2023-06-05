@@ -31,7 +31,7 @@ module top(
 
     //IF_ID
     IF_ID IF_ID(.clk(clk), .rstn(rstn), .if_PC(pc), .if_instr(instr),
-        .id_PC(id_PC), .id_instr(id_instr), .br_flag(br_flag),
+        .id_PC(id_PC), .id_instr(id_instr),
         .load_stop_request(load_stop_request));
 
     //流水线每个阶段需要传递上个阶段的信息

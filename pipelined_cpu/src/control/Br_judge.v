@@ -17,9 +17,10 @@ module Br_judge(
     output reg [31:0] br_addr, linkAddr;
 
     wire [5:0] op, func, temp;
-    wire [31:0] pc_4;
+    wire [31:0] pc_4, pc_8;
 
     assign pc_4 = pc + 4;
+    assign pc_8 = pc + 8;
 
     assign op = instr[31:26];
     assign func = instr[5:0];
@@ -105,7 +106,7 @@ module Br_judge(
                         default: br_addr <= 0;
                     endcase
                 end 
-                `BEQ, `BNE, `BGTZ, `BLEZ, `SPE_BRA:   br_addr <= pc_4 + {{14{instr[31]}}, instr[15:0], 2'b0};
+                `BEQ, `BNE, `BGTZ, `BLEZ, `SPE_BRA:   br_addr <= pc_4 + {{14{instr[15]}}, instr[15:0], 2'b0};
                 default: br_addr <= 0;
             endcase
         end
@@ -116,12 +117,13 @@ module Br_judge(
     always @(*) begin
         if (!rstn)
             linkAddr <= 0;
+        //链接地址为添加延迟槽的情况
         else begin
             case (op)
-                `JAL:   linkAddr <= pc_4;
+                `JAL:   linkAddr <= pc_8;
                 `R: begin
                     case (func)
-                        `JALR:  linkAddr <= pc_4; 
+                        `JALR:  linkAddr <= pc_8; 
                         default: linkAddr <= 0;
                     endcase
                 end 
